@@ -39,6 +39,8 @@ echo "Converting model to .onnx..."
 
 docker exec model_converter python3 ./opt/convert_to_onnx.py "/opt/$1" $2
 
+#docker cp model_converter:./${strarr[0]}.log "${strarr[0]}.log"
+
 echo "Success!"
 echo "Converting model to .ort..."
 
