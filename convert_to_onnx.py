@@ -1,6 +1,6 @@
 """
 This file is part of the weedscan project.
-It is used to convert neural network model from PyTorch's .pth format to .onnx
+It is used to convert mobilenet-v2 models from PyTorch's .pth format to .onnx
 
 2Pi Software
 Lachlan Walker 2023
