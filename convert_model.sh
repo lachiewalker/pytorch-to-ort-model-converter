@@ -19,9 +19,9 @@
 
 readarray -d . -t strarr <<< "$1"
 
-echo "Loading docker image..."
+#echo "Loading docker image..."
 
-docker build -t convert-mnv2 .
+#docker build -t convert-mnv2 .
 
 echo "Spinning up container..."
 
@@ -34,7 +34,7 @@ docker cp $1 model_converter:/opt/$1
 echo "Copying completed."
 echo "Converting model to .onnx..."
 
-docker exec model_converter ./opt/convert_to_onnx $1 $2
+docker exec model_converter ./opt/convert_to_onnx.sh $1 $2
 
 echo "Success!"
 echo "Converting model to .ort..."
