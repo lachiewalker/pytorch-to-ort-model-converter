@@ -8,7 +8,9 @@ Lachlan Walker 2023
 
 from torchvision import models
 from torch import nn
-import argparse, torch, onnx, onnxruntime
+import logging, argparse
+import torch
+import onnx, onnxruntime
 from collections import OrderedDict
 import numpy as np
 
@@ -19,9 +21,13 @@ if __name__ == "__main__":
 
 	parser = argparse.ArgumentParser()
 	parser.add_argument('--test', '-t', action='store_true')
-	parser.add_argument('modelpath', help='path to pytorch model')
+	parser.add_argument('modelpath', type=str, help='path to pytorch model')
 	parser.add_argument('n_species', type=int, help='number of species classified by the model')
 	args = parser.parse_args()
+
+	modelname = args.modelpath.split(".")[0]
+	logfile = "/logs/" + modelname + ".log"
+	logging.basicConfig(filename=logfile, filemode='w', format='%(levelname)s - %(message)s')
 
 	# Create an instance of the mobilenet_v2 NN which will be the backbone of the model
 	mnv2 = models.mobilenet_v2()
@@ -33,9 +39,13 @@ if __name__ == "__main__":
 	# Re-attach a softmax activation layer to the classifier head
 	mnv2.classifier.add_module('2', nn.Softmax(dim=1))
 
+	logging.info('Custom MobileNet V2 instance created.')
+
 	# Load the state dictionary of model parameters from file
 	loaded_model_state = torch.load(args.modelpath, map_location=torch.device('cpu'))
 	loaded_model_state = loaded_model_state['state_dict']
+
+	logging.info('Model paramters loaded to MEMORY successfully.')
 
 	# Create a list of parameter sets as per-layer tensors
 	loaded_model_layers = list(loaded_model_state.keys())
@@ -53,6 +63,8 @@ if __name__ == "__main__":
 	# Load the new state dictionary into the generated model
 	mnv2.load_state_dict(new_state)
 
+	logging.info('Model paramters loaded to MODEL successfully.')
+
 	# Create random input tensor for model tracing
 	batch_size = 1
 	m_dim = 224
@@ -63,7 +75,7 @@ if __name__ == "__main__":
 	mnv2.eval()
 
 	# Set output .onnx model filename	
-	onnx_model_name = args.modelpath.split(".")[0] + ".onnx"
+	onnx_model_name = modelname + ".onnx"
 
 	# Convert model to .onnx format via operation tracing
 	torch.onnx.export(mnv2, 				# Model to convert
@@ -77,17 +89,27 @@ if __name__ == "__main__":
 		dynamic_axes = {'input' : {0 : 'batch_size', 2 : 'm_dim', 3 : 'n_dim'}, 
 		'output' : {0 : 'batch_size'}})		# Specify input tensor axes whose sizes may change when running the model
 
+	logging.info('Model traced to .onnx successfully.')
+
 	# OPTIONAL: test output .onnx model results against the input .pth model results
 	if args.test:
+		logging.info('Testing converted model...')
+
 		# Output of the pytorch model for the dummy input tensor
 		torch_out = mnv2(x)
+
+		logging.info('Pytorch model evaluation result has shape: ', torch_out.shape)
 
 		# Load the .onnx model and verify that it has a executable graph
 		onnx_model = onnx.load(onnx_model_name)
 		onnx.checker.check_model(onnx_model)
 
+		logging.info('Loaded and checked ONNX model graph.')
+
 		# Initialise onnx runtime session
 		ort_session = onnxruntime.InferenceSession(onnx_model_name)
+
+		logging.info('ONNXRuntime session initialised.')
 
 		# Handles requirements of model tensors to have gradients calculated
 		def to_numpy(tensor):
@@ -97,6 +119,9 @@ if __name__ == "__main__":
 		ort_inputs = {ort_session.get_inputs()[0].name: to_numpy(x)}
 		ort_outs = ort_session.run(None, ort_inputs)
 
+		logging.info('ONNXRuntime model evaluation result has shape: ', ort_outs.shape)
+
 		# compare ONNX Runtime and PyTorch results
 		np.testing.assert_allclose(to_numpy(torch_out), ort_outs[0], rtol=1e-03, atol=1e-05)
 		print("Exported model has been tested with ONNXRuntime.")
+		logging.info('Model results match.')
