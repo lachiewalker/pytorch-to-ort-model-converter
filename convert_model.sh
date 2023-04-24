@@ -19,7 +19,7 @@
 
 readarray -d . -t strarr <<< "$1"
 
-if [[ "$(docker images -q convert-mnv2)" == "" ]] then
+if [[ "$(docker images -q convert-mnv2)" == "" ]]; then
 	echo "Docker image: convert-mnv2 not found. Building image from Dockerfile..."
 	docker build -t convert-mnv2 .
 else
@@ -37,7 +37,7 @@ docker cp $1 model_converter:/opt/$1
 echo "Copying completed."
 echo "Converting model to .onnx..."
 
-docker exec model_converter python3 ./opt/convert_to_onnx.py "./opt/$1" $2
+docker exec model_converter python3 ./opt/convert_to_onnx.py "/opt/$1" $2
 
 echo "Success!"
 echo "Converting model to .ort..."
