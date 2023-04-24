@@ -23,7 +23,7 @@ if __name__ == "__main__":
 	parser.add_argument('n_species', type=int, help='number of species classified by the model')
 	args = parser.parse_args()
 
-    # Create an instance of the mobilenet_v2 NN which will be the backbone of the model
+	# Create an instance of the mobilenet_v2 NN which will be the backbone of the model
 	mnv2 = models.mobilenet_v2()
 
 	# Modify the number of output features in the classifier head
