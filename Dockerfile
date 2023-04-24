@@ -8,6 +8,5 @@ RUN pip install torch==2.0.0 torchvision==0.15.0 --index-url https://download.py
 RUN pip install onnx==1.13.1 onnxruntime==1.12.1
 
 COPY convert_to_onnx.py /opt/
-COPY convert_to_onnx.sh /opt/
 
 RUN ["chmod", "+x", "/opt/convert_to_onnx.sh"]
