@@ -28,22 +28,10 @@ if __name__ == "__main__":
 	modelname = args.modelpath.split(".")[0]
 	logfile = modelname + ".log"
 
-	# Create a custom logger
-	logger = logging.getLogger(__name__)
+	for handler in logging.root.handlers[:]:
+		logging.root.removeHandler(handler)
 
-	# Create handlers
-	c_handler = logging.StreamHandler()
-	f_handler = logging.FileHandler(logfile)
-
-	# Create formatters and add it to handlers
-	c_format = logging.Formatter('%(levelname)s - %(message)s')
-	f_format = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-	c_handler.setFormatter(c_format)
-	f_handler.setFormatter(f_format)
-
-	# Add handlers to the logger
-	logger.addHandler(c_handler)
-	logger.addHandler(f_handler)
+	logging.basicConfig(filename=logfile, level=logging.DEBUG, format='%(levelname)s - %(message)s')
 
 	# Create an instance of the mobilenet_v2 NN which will be the backbone of the model
 	mnv2 = models.mobilenet_v2()

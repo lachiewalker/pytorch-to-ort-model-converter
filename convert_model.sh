@@ -39,19 +39,16 @@ echo "Converting model to .onnx..."
 
 docker exec model_converter python3 ./opt/convert_to_onnx.py "/opt/$1" $2
 
-#docker cp model_converter:./${strarr[0]}.log "${strarr[0]}.log"
+#docker cp model_converter:/opt/${strarr[0]}.log "${strarr[0]}.log"
 
-echo "Success!"
 echo "Converting model to .ort..."
 
 docker exec model_converter python3 -m onnxruntime.tools.convert_onnx_models_to_ort "/opt/${strarr[0]}.onnx" 
 
-echo "Success!"
 echo "Copying .ort file to host machine..."
 
 docker cp model_converter:/opt/${strarr[0]}.ort "${strarr[0]}.ort"
 
-echo "Success!"
 echo "Killing container..."
 
 docker stop model_converter > /dev/null
