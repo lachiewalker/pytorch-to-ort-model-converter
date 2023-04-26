@@ -19,6 +19,17 @@
 
 readarray -d . -t strarr <<< "$1"
 
+if [[ $# != 2 ]]; then
+    echo "Incorrect number of arguments supplied. Please check usage instructions."
+    exit 1
+fi
+
+FILE=$1
+if [[ ! -f "$FILE" ]]; then
+    echo "Model file not found, please check your input for typos".
+    exit 1
+fi
+
 if [[ "$(docker images -q convert-mnv2)" == "" ]]; then
 	echo "Docker image: convert-mnv2 not found. Building image from Dockerfile..."
 	docker build -t convert-mnv2 .
