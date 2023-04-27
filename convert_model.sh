@@ -32,10 +32,13 @@ fi
 
 if [[ "$(docker images -q convert-mnv2)" == "" ]]; then
 	echo "Docker image: convert-mnv2 not found. Building image from Dockerfile..."
+
 	docker build -t convert-mnv2 .
 else
 	echo "Docker image:convert-mnv2 found."
 fi
+
+# recopy the py after the buiild, so you aren't running on old code. 
 
 echo "Spinning up container..."
 
@@ -44,6 +47,7 @@ docker run --name model_converter -dit convert-mnv2
 echo "Copying PyTorch model to container..."
 
 docker cp $1 model_converter:/opt/$1
+
 
 echo "Copying completed."
 echo "Converting model to .onnx..."

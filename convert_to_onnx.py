@@ -33,6 +33,7 @@ if __name__ == "__main__":
 
 	logging.basicConfig(filename=logfile, level=logging.DEBUG, format='%(levelname)s - %(message)s')
 
+
 	# Create an instance of the mobilenet_v2 NN which will be the backbone of the model
 	mnv2 = models.mobilenet_v2()
 
@@ -43,13 +44,13 @@ if __name__ == "__main__":
 	# Re-attach a softmax activation layer to the classifier head
 	mnv2.classifier.add_module('2', nn.Softmax(dim=1))
 
-	logger.info('Custom MobileNet V2 instance created.')
+	logging.info('Custom MobileNet V2 instance created.')
 
 	# Load the state dictionary of model parameters from file
 	loaded_model_state = torch.load(args.modelpath, map_location=torch.device('cpu'))
 	loaded_model_state = loaded_model_state['state_dict']
 
-	logger.info('Model paramters loaded to MEMORY successfully.')
+	logging.info('Model paramters loaded to MEMORY successfully.')
 
 	# Create a list of parameter sets as per-layer tensors
 	loaded_model_layers = list(loaded_model_state.keys())
@@ -67,7 +68,7 @@ if __name__ == "__main__":
 	# Load the new state dictionary into the generated model
 	mnv2.load_state_dict(new_state)
 
-	logger.info('Model paramters loaded to MODEL successfully.')
+	logging.info('Model paramters loaded to MODEL successfully.')
 
 	# Create random input tensor for model tracing
 	batch_size = 1
@@ -93,27 +94,27 @@ if __name__ == "__main__":
 		dynamic_axes = {'input' : {0 : 'batch_size', 2 : 'm_dim', 3 : 'n_dim'}, 
 		'output' : {0 : 'batch_size'}})		# Specify input tensor axes whose sizes may change when running the model
 
-	logger.info('Model traced to .onnx successfully.')
+	logging.info('Model traced to .onnx successfully.')
 
 	# OPTIONAL: test output .onnx model results against the input .pth model results
 	if args.test:
-		logger.info('Testing converted model...')
+		logging.info('Testing converted model...')
 
 		# Output of the pytorch model for the dummy input tensor
 		torch_out = mnv2(x)
 
-		logger.info('Pytorch model evaluation result has shape: ', torch_out.shape)
+		logging.info('Pytorch model evaluation result has shape: ', torch_out.shape)
 
 		# Load the .onnx model and verify that it has a executable graph
 		onnx_model = onnx.load(onnx_model_name)
 		onnx.checker.check_model(onnx_model)
 
-		logger.info('Loaded and checked ONNX model graph.')
+		logging.info('Loaded and checked ONNX model graph.')
 
 		# Initialise onnx runtime session
 		ort_session = onnxruntime.InferenceSession(onnx_model_name)
 
-		logger.info('ONNXRuntime session initialised.')
+		logging.info('ONNXRuntime session initialised.')
 
 		# Handles requirements of model tensors to have gradients calculated
 		def to_numpy(tensor):
@@ -123,9 +124,9 @@ if __name__ == "__main__":
 		ort_inputs = {ort_session.get_inputs()[0].name: to_numpy(x)}
 		ort_outs = ort_session.run(None, ort_inputs)
 
-		logger.info('ONNXRuntime model evaluation result has shape: ', ort_outs.shape)
+		logging.info('ONNXRuntime model evaluation result has shape: ', ort_outs.shape)
 
 		# compare ONNX Runtime and PyTorch results
 		np.testing.assert_allclose(to_numpy(torch_out), ort_outs[0], rtol=1e-03, atol=1e-05)
 		print("Exported model has been tested with ONNXRuntime.")
-		logger.info('Model results match.')
+		logging.info('Model results match.')
